@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Exchange Platform</title>
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Шапка сайта -->
+    <header class="header">
+        <div class="container">
+            <img src="assets/logo.svg" alt="SkillExchange Logo" class="logo">
+            <nav class="nav">
+                <a href="index.html">Главная</a>
+                <a href="how-it-works.html">Как это работает</a>
+                <a href="login.html">Войти</a>
+                <button class="register-btn" onclick="location.href='register.html';">Регистрация</button>
+            </nav>
+        </div>
+    </header>
+
+
+    <!-- Центральный блок -->
+    <section class="hero">
+        <div class="container">
+            <h1>Обменяйся навыками и узнай что-то новое!</h1>
+            <p>Поделись своими знаниями и получи доступ к навыкам других.</p>
+            <button class="find-partner-btn">Найти партнера</button>
+        </div>
+    </section>
+
+    <!-- Блок с инструкцией -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <h2>Как это работает?</h2>
+            <div class="steps">
+                <div class="step">
+                    <img src="assets/user-icon.svg" alt="User Icon">
+                    <p>Зарегистрируйся</p>
+                </div>
+                <div class="step">
+                    <img src="assets/skills-icon.svg" alt="Skills Icon">
+                    <p>Укажи навыки и интересы</p>
+                </div>
+                <div class="step">
+                    <img src="assets/handshake-icon.svg" alt="Handshake Icon">
+                    <p>Найди партнера</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Лента предложений -->
+    <section class="popular-users">
+        <h2>Популярные пользователи</h2>
+        <div class="user-carousel-container">
+            <button class="carousel-button left" onclick="scrollCarousel(-200)">&#10094;</button>
+            <div class="user-carousel" id="user-carousel">
+                <!-- Здесь будут динамически добавляться карточки пользователей -->
+            </div>
+            <button class="carousel-button right" onclick="scrollCarousel(200)">&#10095;</button>
+        </div>
+    </section>
+
+    <!-- Футер -->
+    <footer>
+        <p>© 2025, Платформа обмена навыками</p>
+    </footer>
+
+    <!-- Модальное окно деталей пользователя -->
+    <div id="user-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="modal-title"></h2>
+            <p class="modal-skills"></p>
+            <p class="modal-interests"></p>
+        </div>
+    </div>
+    
+    <!-- Блок уведомления -->
+    <div id="notification" class="notification hidden">
+        <p id="notification-message"></p>
+    </div>
+    
+    <!-- Подключение JS файлов -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
