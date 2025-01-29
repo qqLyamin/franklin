@@ -1,17 +1,16 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+mod internal;
+
+use actix_web::{App, HttpServer};
+
+use internal::api::http::v1::franklin;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .service(hello)
+            .service(franklin::hello)
     })
         .bind(("127.0.0.1", 8080))?
         .run()
         .await
-}
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
 }
