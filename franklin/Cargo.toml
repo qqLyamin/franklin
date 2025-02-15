@@ -3,5 +3,9 @@ name = "franklin"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [".", "entity", "migration"]
+
 [dependencies]
 actix-web = "4"
+sea-orm = "1.1.5"
