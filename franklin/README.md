@@ -43,7 +43,7 @@ Skill Exchange Platform — это веб-приложение, предназн
 - POST `refresh` — Обновление Access токена с использованием Refresh токена.
 
 ### Прочее
-- GET `` — Проверка работы приложения.
+- GET `/ping` — healthcheck
 - GET `protected` — Защищенный маршрут, доступный только с валидным токеном.
 
 ---
@@ -77,3 +77,8 @@ Skill Exchange Platform — это веб-приложение, предназн
 
 
 ## Тестирование
+
+## Entity generation example
+
+```bash
+sea-orm-cli generate entity -u postgresql://frank:ben@localhost/franklinclub -o src/internal/entity
