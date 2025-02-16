@@ -1,6 +1,15 @@
 use crate::internal::traits::UserRepo;
 use crate::internal::entity::{prelude::User, user::Model};
-use sea_orm::{DatabaseConnection, Database, EntityTrait, QuerySelect, ConnectOptions};
+use sea_orm::{
+    DatabaseConnection,
+    Database,
+    EntityTrait,
+    QuerySelect,
+    ConnectOptions,
+    SqlErr,
+};
+use crate::internal::err;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct Repo {
@@ -17,11 +26,28 @@ impl UserRepo for Repo {
             .unwrap()
     }
 
-    async fn get_one(&self, id: i32) -> Option<Model> {
+    async fn get_one(&self, id: Uuid) -> Option<Model> {
         User::find_by_id(id)
             .one(&self.db)
             .await
             .unwrap()
+    }
+
+    async fn create(&self, model: Model) -> Result<Uuid, err::User> {
+        User::insert(&model)
+            .exec(&self.db)
+            .await
+            .map(|| model.id)
+            .map_err(|e| match e.sql_err() {
+                Some(SqlErr::UniqueConstraintViolation(name)) => {
+                    if name.eq("name") {
+                        err::User::NameExists
+                    } else {
+                        err::User::EmailExists
+                    }
+                },
+                _ => err::User::DB,
+            })
     }
 }
 

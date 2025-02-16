@@ -19,6 +19,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .app_data(web::Data::new(repo.clone()))
             .route("/users", web::get().to(franklin::users::<Repo>))
+            .route("/users", web::post().to(franklin::sign_up::<Repo>))
             .route("/users/{id}", web::get().to(franklin::user::<Repo>))
             .route("/ping", web::get().to(franklin::hello))
     })

@@ -12,7 +12,11 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(User::Table)
                     .if_not_exists()
-                    .col(pk_auto(User::Id))
+                    .col(
+                        ColumnDef::new(User::Id)
+                            .uuid()
+                            .primary_key(),
+                    )
                     .col(
                         ColumnDef::new(User::Name)
                             .string()
