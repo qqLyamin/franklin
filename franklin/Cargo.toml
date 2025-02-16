@@ -10,6 +10,7 @@ members = [".", "entity", "migration"]
 path = "entity"
 
 [dependencies]
+actix-cors = "0.7.0"
 actix-web = "4"
 dotenvy = "0.15.7"
 sea-orm = { version = "1.1.5", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
