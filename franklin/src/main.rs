@@ -10,7 +10,8 @@ use std::env;
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").unwrap();
-    let repo = Repo::new(db_url).await;
+    let max_conn = env::var("DATABASE_MAX_CONN").unwrap().parse::<u32>().unwrap();
+    let repo = Repo::new(db_url, max_conn).await;
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(repo.clone()))

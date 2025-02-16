@@ -1,6 +1,6 @@
 use crate::internal::traits::UserRepo;
 use crate::internal::entity::{prelude::User, user::Model};
-use sea_orm::*;
+use sea_orm::{DatabaseConnection, Database, EntityTrait, QuerySelect, ConnectOptions};
 
 #[derive(Clone)]
 pub struct Repo {
@@ -19,8 +19,10 @@ impl UserRepo for Repo {
 }
 
 impl Repo {
-    pub async fn new(db_url: String) -> Self {
-        let db = Database::connect(db_url)
+    pub async fn new(db_url: String, max_conn: u32) -> Self {
+        let mut opt = ConnectOptions::new(db_url);
+        opt.max_connections(max_conn);
+        let db = Database::connect(opt)
             .await
             .unwrap();
         Self {
