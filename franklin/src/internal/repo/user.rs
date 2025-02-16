@@ -19,8 +19,8 @@ impl UserRepo for Repo {
 }
 
 impl Repo {
-    pub async fn new() -> Self {
-        let db = Database::connect("postgresql://frank:ben@localhost/franklinclub")
+    pub async fn new(db_url: String) -> Self {
+        let db = Database::connect(db_url)
             .await
             .unwrap();
         Self {
