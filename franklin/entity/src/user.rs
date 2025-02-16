@@ -6,6 +6,7 @@ pub enum User {
     Id,
     Name,
     Email,
+    Salt,
     HashedPassword,
     Skills,
     Interests

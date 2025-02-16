@@ -13,8 +13,19 @@ impl MigrationTrait for Migration {
                     .table(User::Table)
                     .if_not_exists()
                     .col(pk_auto(User::Id))
-                    .col(string(User::Name))
-                    .col(string(User::Email))
+                    .col(
+                        ColumnDef::new(User::Name)
+                            .string()
+                            .not_null()
+                            .unique_key(),
+                    )
+                    .col(
+                        ColumnDef::new(User::Email)
+                            .string()
+                            .not_null()
+                            .unique_key(),
+                    )
+                    .col(string(User::Salt))
                     .col(string(User::HashedPassword))
                     .col(string(User::Interests))
                     .col(string(User::Skills))
