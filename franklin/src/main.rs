@@ -9,7 +9,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .app_data(web::Data::new(Repo::new()))
-            .route("/users/", web::get().to(franklin::users))
+            .route("/users/", web::get().to(franklin::users::<Repo>))
             .route("/ping", web::get().to(franklin::hello))
     })
         .bind(("127.0.0.1", 8080))?

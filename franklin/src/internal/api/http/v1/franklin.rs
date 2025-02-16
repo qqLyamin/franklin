@@ -2,15 +2,14 @@ use actix_web::{web, HttpResponse, Responder};
 use crate::internal::api::http::v1::model::request::UsersQuery;
 use crate::internal::api::http::v1::model::response::User;
 use crate::internal::traits::UserRepo;
-use crate::internal::repo::user::Repo;
 
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok()
 }
 
-pub async fn users(
+pub async fn users<R: UserRepo>(
     q: web::Query<UsersQuery>,
-    repo: web::Data<Repo>,
+    repo: web::Data<R>,
 ) -> impl Responder {
     let users: Vec<User> = repo
         .get_many(

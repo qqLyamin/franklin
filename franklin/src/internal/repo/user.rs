@@ -10,13 +10,12 @@ impl UserRepo for Repo {
         let db = Database::connect("postgresql://frank:ben@localhost/franklinclub")
             .await
             .unwrap();
-        let users = User::find()
+        User::find()
             .offset(skip as u64)
             .limit(limit as u64)
             .all(&db)
             .await
-            .unwrap();
-        users
+            .unwrap()
     }
 }
 
