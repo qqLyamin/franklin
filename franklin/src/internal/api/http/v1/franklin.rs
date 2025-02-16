@@ -1,17 +1,17 @@
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{web, HttpResponse, Responder};
 use crate::internal::api::http::v1::model::request::UsersQuery;
 use crate::internal::api::http::v1::model::response::User;
-use crate::internal::repo::user::Repo;
 use crate::internal::traits::UserRepo;
+use crate::internal::repo::user::Repo;
 
-#[get("/ping")]
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok()
 }
 
-#[get("/users/")]
-pub async fn users(q: web::Query<UsersQuery>) -> impl Responder {
-    let repo = Repo::new();
+pub async fn users(
+    q: web::Query<UsersQuery>,
+    repo: web::Data<Repo>,
+) -> impl Responder {
     let users: Vec<User> = repo
         .get_many(
             q.skip.unwrap_or(0),

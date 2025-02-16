@@ -2,6 +2,7 @@ use crate::internal::traits::UserRepo;
 use crate::internal::entity::{prelude::User, user::Model};
 use sea_orm::*;
 
+#[derive(Clone)]
 pub struct Repo {}
 
 impl UserRepo for Repo {
