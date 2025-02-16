@@ -21,23 +21,19 @@ pub async fn users<R: UserRepo>(
         .into_iter()
         .map(from_model)
         .collect();
-    HttpResponse::Ok()
-        .content_type("application/json")
-        .body(serde_json::to_string(&users).unwrap())
+    HttpResponse::Ok().json(users)
 }
 
 pub async fn user<R: UserRepo>(
     p: web::Path<i32>,
     repo: web::Data<R>,
 ) -> impl Responder {
-    let maybe_user: Option<User> = repo
+    repo
         .get_one(p.into_inner())
         .await
-        .map(from_model);
-    match maybe_user {
-        Some(user) => HttpResponse::Ok().json(user),
-        _ => HttpResponse::NotFound().finish(),
-    }
+        .map(from_model)
+        .map(|user| HttpResponse::Ok().json(user))
+        .unwrap_or(HttpResponse::NotFound().finish())
 }
 
 fn from_model(u: Model) -> User {
