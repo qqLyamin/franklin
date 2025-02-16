@@ -16,6 +16,13 @@ impl UserRepo for Repo {
             .await
             .unwrap()
     }
+
+    async fn get_one(&self, id: i32) -> Option<Model> {
+        User::find_by_id(id)
+            .one(&self.db)
+            .await
+            .unwrap()
+    }
 }
 
 impl Repo {
