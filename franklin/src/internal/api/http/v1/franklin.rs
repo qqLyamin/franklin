@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse, Responder};
 use crate::internal::api::http::v1::model::request::{UsersQuery, UserBody};
 use crate::internal::api::http::v1::model::response::{User, UserCreated};
-use crate::internal::traits::UserRepo;
+use crate::internal::contracts::{UserRepo, Service};
 use crate::internal::entity::user::Model;
 use argon2::{
     password_hash::{
@@ -12,6 +12,10 @@ use argon2::{
 };
 use uuid::Uuid;
 use crate::internal::err;
+use hmac::{Hmac, Mac};
+use jwt::SignWithKey;
+use sha2::Sha256;
+use std::collections::BTreeMap;
 
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok()
@@ -19,9 +23,9 @@ pub async fn hello() -> impl Responder {
 
 pub async fn users<R: UserRepo>(
     q: web::Query<UsersQuery>,
-    repo: web::Data<R>,
+    service: web::Data<Service<R>>,
 ) -> impl Responder {
-    let users: Vec<User> = repo
+    let users: Vec<User> = service.repo
         .get_many(
             q.skip.unwrap_or(0),
             q.limit.unwrap_or(10),
@@ -35,9 +39,9 @@ pub async fn users<R: UserRepo>(
 
 pub async fn user<R: UserRepo>(
     p: web::Path<Uuid>,
-    repo: web::Data<R>,
+    service: web::Data<Service<R>>,
 ) -> impl Responder {
-    repo
+    service.repo
         .get_one(p.into_inner())
         .await
         .map(from_model)
@@ -47,7 +51,7 @@ pub async fn user<R: UserRepo>(
 
 pub async fn sign_up<R: UserRepo>(
     body: web::Json<UserBody>,
-    repo: web::Data<R>,
+    service: web::Data<Service<R>>,
 ) -> impl Responder {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
@@ -55,7 +59,7 @@ pub async fn sign_up<R: UserRepo>(
         .body("failed to create user");
     match argon2.hash_password(body.password.as_bytes(), &salt) {
         Err(_) => internal_error,
-        Ok(hashed_password) => repo
+        Ok(hashed_password) => service.repo
             .create(Model{
                 id:              Uuid::new_v4(),
                 name:            body.name.clone().unwrap_or(String::new()),
@@ -66,10 +70,20 @@ pub async fn sign_up<R: UserRepo>(
                 hashed_password: hashed_password.to_string(),
             })
             .await
-            .map(|id| HttpResponse::Ok().json(UserCreated{
-                id,
-                jwt: String::new(),
-            }))
+            .map(|id| {
+                let secret = [
+                    service.secret.as_bytes(),
+                    salt.to_string().as_bytes(),
+                ].concat();
+                let key: Hmac<Sha256> = Hmac::new_from_slice(&secret)
+                    .unwrap();
+                let mut claims = BTreeMap::new();
+                claims.insert("sub", id.to_string());
+                HttpResponse::Ok().json(UserCreated{
+                    id,
+                    jwt: claims.sign_with_key(&key).unwrap(),
+                })
+            })
             .unwrap_or_else(|e| match e {
                 err::User::EmailExists => HttpResponse::Conflict()
                     .body(format!("email {} already exists", body.email)),

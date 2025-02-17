@@ -1,4 +1,4 @@
-use crate::internal::traits::UserRepo;
+use crate::internal::contracts::UserRepo;
 use crate::internal::entity::{prelude::User, user::Model};
 use sea_orm::{DatabaseConnection, Database, EntityTrait, QuerySelect, ConnectOptions, SqlErr, IntoActiveModel};
 use crate::internal::err;

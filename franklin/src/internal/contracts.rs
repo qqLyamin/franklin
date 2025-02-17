@@ -9,3 +9,8 @@ pub trait UserRepo {
     fn get_one(&self, id: Uuid) -> impl Future<Output=Option<Model>>;
     fn create(&self, model: Model) -> impl Future<Output=Result<Uuid, err::User>>;
 }
+
+pub struct Service<R: UserRepo> {
+    pub repo:   R,
+    pub secret: String,
+}

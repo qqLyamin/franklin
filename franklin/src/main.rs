@@ -6,6 +6,7 @@ use internal::api::http::v1::franklin;
 use dotenvy::dotenv;
 use actix_cors::Cors;
 use crate::internal::config::Config;
+use crate::internal::contracts::Service;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -17,7 +18,10 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin(&cfg.allowed_origin);
         App::new()
             .wrap(cors)
-            .app_data(web::Data::new(repo.clone()))
+            .app_data(web::Data::new(Service{
+                repo:   repo.clone(),
+                secret: cfg.secret.clone(),
+            }))
             .route("/users", web::get().to(franklin::users::<Repo>))
             .route("/users", web::post().to(franklin::sign_up::<Repo>))
             .route("/users/{id}", web::get().to(franklin::user::<Repo>))
