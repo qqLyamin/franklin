@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse, Responder};
 use crate::internal::api::http::v1::model::request::{UsersQuery, UserBody};
-use crate::internal::api::http::v1::model::response::User;
+use crate::internal::api::http::v1::model::response::{User, UserCreated};
 use crate::internal::traits::UserRepo;
 use crate::internal::entity::user::Model;
 use argon2::{
@@ -11,6 +11,7 @@ use argon2::{
     Argon2
 };
 use uuid::Uuid;
+use crate::internal::err;
 
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok()
@@ -50,19 +51,35 @@ pub async fn sign_up<R: UserRepo>(
 ) -> impl Responder {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    let hashed_password = argon2
-        .hash_password(body.password.as_bytes(), &salt)?
-        .to_string();
-    repo
-        .create(Model{
-            id:        Uuid::new_v4(),
-            name:      body.name.clone().unwrap_or(String::new()),
-            email:     body.email.clone(),
-            salt:      salt.to_string(),
-            interests: body.interests.clone().unwrap_or(String::new()),
-            skills:    body.skills.clone().unwrap_or(String::new()),
-            hashed_password,
-        })
+    let internal_error = HttpResponse::InternalServerError()
+        .body("failed to create user");
+    match argon2.hash_password(body.password.as_bytes(), &salt) {
+        Err(_) => internal_error,
+        Ok(hashed_password) => repo
+            .create(Model{
+                id:              Uuid::new_v4(),
+                name:            body.name.clone().unwrap_or(String::new()),
+                email:           body.email.clone(),
+                salt:            salt.to_string(),
+                interests:       body.interests.clone().unwrap_or(String::new()),
+                skills:          body.skills.clone().unwrap_or(String::new()),
+                hashed_password: hashed_password.to_string(),
+            })
+            .await
+            .map(|id| HttpResponse::Ok().json(UserCreated{
+                id,
+                jwt: String::new(),
+            }))
+            .unwrap_or_else(|e| match e {
+                err::User::EmailExists => HttpResponse::Conflict()
+                    .body(format!("email {} already exists", body.email)),
+
+                err::User::NameExists => HttpResponse::Conflict()
+                    .body(format!("name {} already exists", body.name.clone().unwrap())),
+
+                _ => internal_error,
+            })
+    }
 }
 
 fn from_model(u: Model) -> User {

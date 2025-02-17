@@ -1,13 +1,6 @@
 use crate::internal::traits::UserRepo;
 use crate::internal::entity::{prelude::User, user::Model};
-use sea_orm::{
-    DatabaseConnection,
-    Database,
-    EntityTrait,
-    QuerySelect,
-    ConnectOptions,
-    SqlErr,
-};
+use sea_orm::{DatabaseConnection, Database, EntityTrait, QuerySelect, ConnectOptions, SqlErr, IntoActiveModel};
 use crate::internal::err;
 use uuid::Uuid;
 
@@ -34,13 +27,14 @@ impl UserRepo for Repo {
     }
 
     async fn create(&self, model: Model) -> Result<Uuid, err::User> {
-        User::insert(&model)
+        let id = model.id.clone();
+        User::insert(model.into_active_model())
             .exec(&self.db)
             .await
-            .map(|| model.id)
+            .map(|_| id)
             .map_err(|e| match e.sql_err() {
                 Some(SqlErr::UniqueConstraintViolation(name)) => {
-                    if name.eq("name") {
+                    if name.contains("user_name_key") {
                         err::User::NameExists
                     } else {
                         err::User::EmailExists
