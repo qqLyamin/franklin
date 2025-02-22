@@ -43,6 +43,16 @@ impl UserRepo for Repo {
                 _ => err::User::DB,
             })
     }
+
+    async fn delete(&self, id: Uuid) -> Result<(), err::User> {
+        let result = User::delete_by_id(id)
+            .exec(&self.db)
+            .await;
+        match result {
+            Ok(r) => if r.rows_affected == 0 { Err(err::User::NotFound) } else { Ok(()) },
+            _ => Err(err::User::DB),
+        }
+    }
 }
 
 impl Repo {

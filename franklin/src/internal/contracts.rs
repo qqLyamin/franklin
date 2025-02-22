@@ -7,6 +7,7 @@ use uuid::Uuid;
 pub trait UserRepo {
     fn get_many(&self, skip: u32, limit: u32) -> impl Future<Output=Vec<Model>>;
     fn get_one(&self, id: Uuid) -> impl Future<Output=Option<Model>>;
+    fn delete(&self, id: Uuid) -> impl Future<Output=Result<(), err::User>>;
     fn create(&self, model: Model) -> impl Future<Output=Result<Uuid, err::User>>;
 }
 

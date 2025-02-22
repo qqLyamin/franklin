@@ -24,7 +24,11 @@ async fn main() -> std::io::Result<()> {
             }))
             .route("/users", web::get().to(franklin::users::<Repo>))
             .route("/users", web::post().to(franklin::sign_up::<Repo>))
-            .route("/users/{id}", web::get().to(franklin::user::<Repo>))
+            .route("/users/{id}", web::get().to(franklin::get_user::<Repo>))
+            .service(
+                web::resource("/users/{id}")
+                    .route(web::delete().to(franklin::delete_user::<Repo>))
+            )
             .route("/ping", web::get().to(franklin::hello))
     })
         .bind(("127.0.0.1", 8080))?

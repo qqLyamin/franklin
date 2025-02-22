@@ -45,7 +45,7 @@ pub async fn users<R: UserRepo>(
     HttpResponse::Ok().json(users)
 }
 
-pub async fn user<R: UserRepo>(
+pub async fn get_user<R: UserRepo>(
     p: web::Path<Uuid>,
     service: web::Data<Service<R>>,
 ) -> impl Responder {
@@ -112,6 +112,20 @@ pub async fn sign_up<R: UserRepo>(
 
                 _ => internal_error,
             })
+    }
+}
+
+pub async fn delete_user<R: UserRepo>(
+    p: web::Path<Uuid>,
+    service: web::Data<Service<R>>,
+) -> impl Responder {
+    let result = service.repo
+        .delete(p.into_inner())
+        .await;
+    match result {
+        Ok(_) => HttpResponse::NoContent().finish(),
+        Err(err::User::NotFound) => HttpResponse::NotFound().finish(),
+        _ => HttpResponse::InternalServerError().finish(),
     }
 }
 
