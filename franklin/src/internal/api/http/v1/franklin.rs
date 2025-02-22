@@ -1,4 +1,9 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{
+    web,
+    HttpResponse,
+    Responder,
+    cookie::Cookie,
+};
 use crate::internal::api::http::v1::model::request::{UsersQuery, UserBody};
 use crate::internal::api::http::v1::model::response::{User, UserCreated};
 use crate::internal::contracts::{UserRepo, Service};
@@ -15,7 +20,10 @@ use crate::internal::err;
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 use sha2::Sha256;
-use std::collections::BTreeMap;
+use std::{
+    collections::BTreeMap,
+    time::SystemTime,
+};
 
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok()
@@ -71,18 +79,29 @@ pub async fn sign_up<R: UserRepo>(
             })
             .await
             .map(|id| {
-                let secret = [
-                    service.secret.as_bytes(),
-                    salt.to_string().as_bytes(),
-                ].concat();
-                let key: Hmac<Sha256> = Hmac::new_from_slice(&secret)
+                let key: Hmac<Sha256> = Hmac::new_from_slice(&service.secret.as_bytes())
                     .unwrap();
                 let mut claims = BTreeMap::new();
                 claims.insert("sub", id.to_string());
-                HttpResponse::Ok().json(UserCreated{
-                    id,
-                    jwt: claims.sign_with_key(&key).unwrap(),
-                })
+                claims.insert("exp", SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs()
+                    .to_string(),
+                );
+                let jwt = claims.sign_with_key(&key).unwrap();
+                let c = Cookie::build("jwt", jwt.clone())
+                    .domain("127.0.0.1:8080")
+                    .path("/")
+                    .secure(true)
+                    .http_only(true)
+                    .finish();
+                HttpResponse::Ok()
+                    .cookie(c)
+                    .json(UserCreated{
+                        id,
+                        jwt,
+                    })
             })
             .unwrap_or_else(|e| match e {
                 err::User::EmailExists => HttpResponse::Conflict()
