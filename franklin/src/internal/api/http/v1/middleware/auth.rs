@@ -6,11 +6,14 @@ use sha2::Sha256;
 use std::time::SystemTime;
 use crate::internal::contracts::{Service, UserRepo};
 
-// todo: check cookie
 pub async fn jwt<R: UserRepo + 'static>(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
 ) -> Result<ServiceResponse<impl MessageBody>, Error> {
+    let cookie = req.cookie("jwt");
+    if cookie.is_none() {
+        return Err(ErrorUnauthorized("cookie missing"));
+    }
     let service = req.app_data::<web::Data<Service<R>>>().unwrap();
     let check = req
         .headers()
@@ -18,6 +21,9 @@ pub async fn jwt<R: UserRepo + 'static>(
         .and_then(|header| header.to_str().ok())
         .and_then(|header| header.strip_prefix("Bearer "))
         .and_then(|token| {
+            if token.ne(cookie.unwrap().value()) {
+                return None
+            }
             let key: Hmac<Sha256> = Hmac::new_from_slice(service.secret.as_bytes()).unwrap();
             let claims: Result<BTreeMap<String, String>, _> = token.verify_with_key(&key);
             claims.ok()
