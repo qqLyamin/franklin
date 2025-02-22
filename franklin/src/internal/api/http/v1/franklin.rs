@@ -1,5 +1,6 @@
 use actix_web::{
     web,
+    HttpRequest,
     HttpResponse,
     Responder,
     cookie::Cookie,
@@ -18,7 +19,7 @@ use argon2::{
 use uuid::Uuid;
 use crate::internal::err;
 use hmac::{Hmac, Mac};
-use jwt::SignWithKey;
+use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha256;
 use std::{
     collections::BTreeMap,
@@ -114,13 +115,33 @@ pub async fn sign_up<R: UserRepo>(
     }
 }
 
-// todo: check id
 pub async fn delete_user<R: UserRepo>(
+    r: HttpRequest,
     p: web::Path<Uuid>,
     service: web::Data<Service<R>>,
 ) -> impl Responder {
+    let sub = r
+        .headers()
+        .get("Authorization")
+        .and_then(|header| header.to_str().ok())
+        .and_then(|header| header.strip_prefix("Bearer "))
+        .and_then(|token| {
+            let key: Hmac<Sha256> = Hmac::new_from_slice(service.secret.as_bytes()).unwrap();
+            let claims: Result<BTreeMap<String, String>, _> = token.verify_with_key(&key);
+            claims.ok()
+        })
+        .map(|claims| claims
+            .get("sub")
+            .map(|sub| sub.clone())
+            .unwrap_or(String::new())
+        )
+        .unwrap();
+    let id = p.into_inner();
+    if sub.ne(&id.to_string()) {
+        return HttpResponse::Forbidden().finish()
+    }
     let result = service.repo
-        .delete(p.into_inner())
+        .delete(id)
         .await;
     match result {
         Ok(_) => HttpResponse::NoContent().finish(),
