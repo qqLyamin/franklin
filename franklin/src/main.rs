@@ -30,7 +30,7 @@ async fn main() -> std::io::Result<()> {
             .route("/users/{id}", web::get().to(franklin::get_user::<Repo>))
             .service(
                 web::resource("/users/{id}")
-                    .wrap(from_fn(jwt))
+                    .wrap(from_fn(jwt::<Repo>))
                     .route(web::delete().to(franklin::delete_user::<Repo>))
             )
             .route("/ping", web::get().to(franklin::hello))

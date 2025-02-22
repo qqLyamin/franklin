@@ -114,6 +114,7 @@ pub async fn sign_up<R: UserRepo>(
     }
 }
 
+// todo: check id
 pub async fn delete_user<R: UserRepo>(
     p: web::Path<Uuid>,
     service: web::Data<Service<R>>,
