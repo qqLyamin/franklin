@@ -83,12 +83,11 @@ pub async fn sign_up<R: UserRepo>(
                     .unwrap();
                 let mut claims = BTreeMap::new();
                 claims.insert("sub", id.to_string());
-                claims.insert("exp", SystemTime::now()
+                let time_unix = SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .unwrap()
-                    .as_secs()
-                    .to_string(),
-                );
+                    .as_secs();
+                claims.insert("exp", (time_unix + 7*24*60*60).to_string());
                 let jwt = claims.sign_with_key(&key).unwrap();
                 let c = Cookie::build("jwt", jwt.clone())
                     .domain("127.0.0.1:8080")

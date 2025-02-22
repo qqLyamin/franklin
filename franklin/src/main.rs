@@ -1,8 +1,11 @@
 mod internal;
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpServer, middleware::from_fn};
 use crate::internal::repo::user::Repo;
-use internal::api::http::v1::franklin;
+use internal::api::http::v1::{
+    franklin,
+    middleware::auth::jwt,
+};
 use dotenvy::dotenv;
 use actix_cors::Cors;
 use crate::internal::config::Config;
@@ -27,6 +30,7 @@ async fn main() -> std::io::Result<()> {
             .route("/users/{id}", web::get().to(franklin::get_user::<Repo>))
             .service(
                 web::resource("/users/{id}")
+                    .wrap(from_fn(jwt))
                     .route(web::delete().to(franklin::delete_user::<Repo>))
             )
             .route("/ping", web::get().to(franklin::hello))
