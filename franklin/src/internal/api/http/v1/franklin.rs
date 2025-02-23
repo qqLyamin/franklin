@@ -107,7 +107,7 @@ pub async fn sign_up<R: UserRepo>(
                     jwt,
                 })
         })
-        .unwrap_or_else(|e| map_upsert_err(e, body.name.clone(), Some(body.email.clone())))
+        .unwrap_or_else(map_upsert_err(body.name.clone(), Some(body.email.clone())))
 }
 
 pub async fn delete_user<R: UserRepo>(
@@ -166,7 +166,7 @@ pub async fn update_user<R: UserRepo>(
         })
         .await
         .map(|_| HttpResponse::NoContent().finish())
-        .unwrap_or_else(|e| map_upsert_err(e, body.name.clone(), body.email.clone()))
+        .unwrap_or_else(map_upsert_err(body.name.clone(), body.email.clone()))
 }
 
 fn from_model(u: Model) -> User {
@@ -188,13 +188,11 @@ fn hash_password(password: &str, maybe_salt_base64: Option<&str>) -> Option<(Str
     Some((ph.to_string(), salt.to_string()))
 }
 
-// todo: return closure
 fn map_upsert_err(
-    e: err::User,
     name: Option<String>,
     email: Option<String>,
-) -> HttpResponse {
-    match e {
+) -> impl FnOnce(err::User) -> HttpResponse {
+    |e: err::User| match e {
         err::User::EmailExists => HttpResponse::Conflict()
             .body(format!("email {} already exists", email.unwrap())),
 
