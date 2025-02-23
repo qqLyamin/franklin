@@ -4,7 +4,10 @@ use actix_web::{web, App, HttpServer, middleware::from_fn};
 use crate::internal::repo::user::Repo;
 use internal::api::http::v1::{
     franklin,
-    middleware::auth::jwt,
+    middleware::auth::{
+        jwt,
+        id_checker
+    },
 };
 use dotenvy::dotenv;
 use actix_cors::Cors;
@@ -31,7 +34,9 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::resource("/users/{id}")
                     .wrap(from_fn(jwt::<Repo>))
+                    .wrap(from_fn(id_checker))
                     .route(web::delete().to(franklin::delete_user::<Repo>))
+                    // .route(web::patch().to(franklin::update_user::<Repo>))
             )
             .route("/ping", web::get().to(franklin::hello))
     })
