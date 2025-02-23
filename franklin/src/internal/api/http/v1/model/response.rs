@@ -11,7 +11,7 @@ pub struct User {
 }
 
 #[derive(Serialize)]
-pub struct UserCreated {
+pub struct UserAuthorized {
     pub id:  Uuid,
     pub jwt: String,
 }

@@ -24,3 +24,10 @@ pub struct UserPatchBody {
     pub skills:       Option<String>,
     pub interests:    Option<String>,
 }
+
+#[derive(Deserialize)]
+pub struct Login {
+    pub name:     Option<String>,
+    pub email:    Option<String>,
+    pub password: String,
+}

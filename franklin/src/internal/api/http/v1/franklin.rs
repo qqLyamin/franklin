@@ -4,8 +4,13 @@ use actix_web::{
     Responder,
     cookie::Cookie,
 };
-use crate::internal::api::http::v1::model::request::{UsersQuery, UserBody, UserPatchBody};
-use crate::internal::api::http::v1::model::response::{User, UserCreated};
+use crate::internal::api::http::v1::model::request::{
+    UsersQuery,
+    UserBody,
+    UserPatchBody,
+    Login,
+};
+use crate::internal::api::http::v1::model::response::{User, UserAuthorized};
 use crate::internal::contracts::{UserRepo, Service};
 use crate::internal::entity::user::{Model, ActiveModel};
 use argon2::{
@@ -83,31 +88,36 @@ pub async fn sign_up<R: UserRepo>(
             hashed_password,
         })
         .await
-        .map(|id| {
-            let key: Hmac<Sha256> = Hmac::new_from_slice(&service.secret.as_bytes())
-                .unwrap();
-            let mut claims = BTreeMap::new();
-            claims.insert("sub", id.to_string());
-            let time_unix = SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs();
-            claims.insert("exp", (time_unix + 7*24*60*60).to_string());
-            let jwt = claims.sign_with_key(&key).unwrap();
-            let c = Cookie::build("jwt", jwt.clone())
-                .domain("127.0.0.1:8080")
-                .path("/")
-                .secure(true)
-                .http_only(true)
-                .finish();
-            HttpResponse::Ok()
-                .cookie(c)
-                .json(UserCreated{
-                    id,
-                    jwt,
-                })
-        })
+        .map(|id| authorize(&service.secret, &id))
         .unwrap_or_else(map_upsert_err(body.name.clone(), Some(body.email.clone())))
+}
+
+pub async fn login<R: UserRepo>(
+    body: web::Json<Login>,
+    service: web::Data<Service<R>>,
+) -> impl Responder {
+    let mut maybe_user: Result<Model, err::User> = Err(err::User::NotFound);
+    if let Some(name) = &body.name {
+        maybe_user = service.repo.get_one_by_name(name).await;
+    } else if let Some(email) = &body.email {
+        maybe_user = service.repo.get_one_by_email(email).await;
+    }
+    if let Err(e) = maybe_user {
+        return match e {
+            err::User::NotFound => HttpResponse::NotFound().finish(),
+            _ => HttpResponse::InternalServerError().finish(),
+        };
+    }
+    let user = maybe_user.ok().unwrap();
+    let maybe_hashed_password = hash_password(&body.password, Some(&user.salt));
+    if maybe_hashed_password.is_none() {
+        return HttpResponse::InternalServerError().finish();
+    }
+    let (hp, _) = maybe_hashed_password.unwrap();
+    if hp.ne(&user.hashed_password) {
+        return HttpResponse::Unauthorized().finish();
+    }
+    authorize(&service.secret, &user.id)
 }
 
 pub async fn delete_user<R: UserRepo>(
@@ -201,4 +211,37 @@ fn map_upsert_err(
 
         _ => HttpResponse::InternalServerError().finish(),
     }
+}
+
+fn issue_jwt(secret: &str, id: &Uuid) -> String {
+    let key: Hmac<Sha256> = Hmac::new_from_slice(secret.as_bytes())
+        .unwrap();
+    let mut claims = BTreeMap::new();
+    claims.insert("sub", id.to_string());
+    let time_unix = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    claims.insert("exp", (time_unix + 7*24*60*60).to_string());
+    claims.sign_with_key(&key).unwrap()
+}
+
+fn build_jwt_cookie(jwt: &str) -> Cookie {
+    Cookie::build("jwt", jwt.clone())
+        .domain("127.0.0.1:8080")
+        .path("/")
+        .secure(true)
+        .http_only(true)
+        .finish()
+}
+
+fn authorize(secret: &str, id: &Uuid) -> HttpResponse {
+    let jwt = issue_jwt(secret, &id);
+    let c = build_jwt_cookie(&jwt);
+    HttpResponse::Ok()
+        .cookie(c)
+        .json(UserAuthorized {
+            id: id.clone(),
+            jwt,
+        })
 }

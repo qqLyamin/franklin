@@ -30,6 +30,7 @@ async fn main() -> std::io::Result<()> {
             }))
             .route("/users", web::get().to(franklin::users::<Repo>))
             .route("/users", web::post().to(franklin::sign_up::<Repo>))
+            .route("/login", web::post().to(franklin::login::<Repo>))
             .route("/users/{id}", web::get().to(franklin::get_user::<Repo>))
             .service(
                 web::resource("/users/{id}")

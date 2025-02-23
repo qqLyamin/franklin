@@ -37,6 +37,22 @@ impl UserRepo for Repo {
         }
     }
 
+    async fn get_one_by_name(&self, name: &str) -> Result<Model, err::User> {
+        match User::find_by_id(id).one(&self.db).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(err::User::NotFound),
+            _ => Err(err::User::DB),
+        }
+    }
+
+    async fn get_one_by_email(&self, email: &str) -> Result<Model, err::User> {
+        match User::find_by_id(id).one(&self.db).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(err::User::NotFound),
+            _ => Err(err::User::DB),
+        }
+    }
+
     async fn create(&self, model: Model) -> Result<Uuid, err::User> {
         let id = model.id.clone();
         User::insert(model.into_active_model())
