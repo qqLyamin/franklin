@@ -1,6 +1,16 @@
 use crate::internal::contracts::UserRepo;
 use crate::internal::entity::{prelude::User, user::Model};
-use sea_orm::{DatabaseConnection, Database, EntityTrait, QuerySelect, ConnectOptions, SqlErr, IntoActiveModel};
+use sea_orm::{
+    DatabaseConnection,
+    Database,
+    EntityTrait,
+    QuerySelect,
+    ConnectOptions,
+    SqlErr,
+    IntoActiveModel,
+    ActiveModelTrait,
+    DbErr,
+};
 use crate::internal::err;
 use uuid::Uuid;
 
@@ -19,11 +29,12 @@ impl UserRepo for Repo {
             .unwrap()
     }
 
-    async fn get_one(&self, id: Uuid) -> Option<Model> {
-        User::find_by_id(id)
-            .one(&self.db)
-            .await
-            .unwrap()
+    async fn get_one(&self, id: Uuid) -> Result<Model, err::User> {
+        match User::find_by_id(id).one(&self.db).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(err::User::NotFound),
+            _ => Err(err::User::DB),
+        }
     }
 
     async fn create(&self, model: Model) -> Result<Uuid, err::User> {
@@ -32,16 +43,16 @@ impl UserRepo for Repo {
             .exec(&self.db)
             .await
             .map(|_| id)
-            .map_err(|e| match e.sql_err() {
-                Some(SqlErr::UniqueConstraintViolation(name)) => {
-                    if name.contains("user_name_key") {
-                        err::User::NameExists
-                    } else {
-                        err::User::EmailExists
-                    }
-                },
-                _ => err::User::DB,
-            })
+            .map_err(map_upsert_err)
+    }
+
+    async fn update(&self, model: Model) -> Result<(), err::User> {
+        model
+            .into_active_model()
+            .update(&self.db)
+            .await
+            .map(|_| ())
+            .map_err(map_upsert_err)
     }
 
     async fn delete(&self, id: Uuid) -> Result<(), err::User> {
@@ -65,5 +76,18 @@ impl Repo {
         Self {
             db,
         }
+    }
+}
+
+fn map_upsert_err(e: DbErr) -> err::User {
+    match e.sql_err() {
+        Some(SqlErr::UniqueConstraintViolation(name)) => {
+            if name.contains("user_name_key") {
+                err::User::NameExists
+            } else {
+                err::User::EmailExists
+            }
+        },
+        _ => err::User::DB,
     }
 }

@@ -36,7 +36,7 @@ async fn main() -> std::io::Result<()> {
                     .wrap(from_fn(jwt::<Repo>))
                     .wrap(from_fn(id_checker))
                     .route(web::delete().to(franklin::delete_user::<Repo>))
-                    // .route(web::patch().to(franklin::update_user::<Repo>))
+                    .route(web::patch().to(franklin::update_user::<Repo>))
             )
             .route("/ping", web::get().to(franklin::hello))
     })
