@@ -7,7 +7,7 @@ use actix_web::{
 use crate::internal::api::http::v1::model::request::{UsersQuery, UserBody, UserPatchBody};
 use crate::internal::api::http::v1::model::response::{User, UserCreated};
 use crate::internal::contracts::{UserRepo, Service};
-use crate::internal::entity::user::Model;
+use crate::internal::entity::user::{Model, ActiveModel};
 use argon2::{
     password_hash::{
         rand_core::OsRng,
@@ -24,6 +24,7 @@ use std::{
     collections::BTreeMap,
     time::SystemTime,
 };
+use sea_orm::ActiveValue;
 
 pub async fn hello() -> impl Responder {
     HttpResponse::Ok()
@@ -154,14 +155,14 @@ pub async fn update_user<R: UserRepo>(
     }
     let (hashed_password, salt) = maybe_hashed_password.unwrap();
     service.repo
-        .update(Model{
-            id:        user.id.clone(),
-            name:      body.name.clone().unwrap_or(user.name),
-            email:     body.email.clone().unwrap_or(user.email),
-            interests: body.interests.clone().unwrap_or(user.interests),
-            skills:    body.skills.clone().unwrap_or(user.skills),
-            salt,
-            hashed_password,
+        .update(ActiveModel{
+            id:              ActiveValue::Set(user.id.clone()),
+            name:            ActiveValue::Set(body.name.clone().unwrap_or(user.name)),
+            email:           ActiveValue::Set(body.email.clone().unwrap_or(user.email)),
+            interests:       ActiveValue::Set(body.interests.clone().unwrap_or(user.interests)),
+            skills:          ActiveValue::Set(body.skills.clone().unwrap_or(user.skills)),
+            salt:            ActiveValue::Set(salt),
+            hashed_password: ActiveValue::Set(hashed_password),
         })
         .await
         .map(|_| HttpResponse::NoContent().finish())

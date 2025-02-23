@@ -1,5 +1,5 @@
 use crate::internal::contracts::UserRepo;
-use crate::internal::entity::{prelude::User, user::Model};
+use crate::internal::entity::{prelude::User, user::Model, user::ActiveModel};
 use sea_orm::{
     DatabaseConnection,
     Database,
@@ -46,9 +46,8 @@ impl UserRepo for Repo {
             .map_err(map_upsert_err)
     }
 
-    async fn update(&self, model: Model) -> Result<(), err::User> {
+    async fn update(&self, model: ActiveModel) -> Result<(), err::User> {
         model
-            .into_active_model()
             .update(&self.db)
             .await
             .map(|_| ())
