@@ -1,5 +1,10 @@
 use crate::internal::contracts::UserRepo;
-use crate::internal::entity::{prelude::User, user::Model, user::ActiveModel};
+use crate::internal::entity::{
+    prelude::*,
+    user::Model,
+    user::ActiveModel,
+    user::Column,
+};
 use sea_orm::{
     DatabaseConnection,
     Database,
@@ -10,6 +15,8 @@ use sea_orm::{
     IntoActiveModel,
     ActiveModelTrait,
     DbErr,
+    ColumnTrait,
+    QueryFilter,
 };
 use crate::internal::err;
 use uuid::Uuid;
@@ -38,7 +45,7 @@ impl UserRepo for Repo {
     }
 
     async fn get_one_by_name(&self, name: &str) -> Result<Model, err::User> {
-        match User::find_by_id(id).one(&self.db).await {
+        match User::find().filter(Column::Name.eq(name)).one(&self.db).await {
             Ok(Some(user)) => Ok(user),
             Ok(None) => Err(err::User::NotFound),
             _ => Err(err::User::DB),
@@ -46,7 +53,7 @@ impl UserRepo for Repo {
     }
 
     async fn get_one_by_email(&self, email: &str) -> Result<Model, err::User> {
-        match User::find_by_id(id).one(&self.db).await {
+        match User::find().filter(Column::Email.eq(email)).one(&self.db).await {
             Ok(Some(user)) => Ok(user),
             Ok(None) => Err(err::User::NotFound),
             _ => Err(err::User::DB),

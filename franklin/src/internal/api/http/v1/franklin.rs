@@ -227,7 +227,7 @@ fn issue_jwt(secret: &str, id: &Uuid) -> String {
 }
 
 fn build_jwt_cookie(jwt: &str) -> Cookie {
-    Cookie::build("jwt", jwt.clone())
+    Cookie::build("jwt", jwt)
         .domain("127.0.0.1:8080")
         .path("/")
         .secure(true)
