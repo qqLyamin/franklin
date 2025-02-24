@@ -11,7 +11,7 @@ use crate::internal::api::http::v1::model::request::{
     Login,
 };
 use crate::internal::api::http::v1::model::response::{User, UserAuthorized};
-use crate::internal::contracts::{UserRepo, Service};
+use crate::internal::contracts::{UserRepo, Service, UserFilters};
 use crate::internal::entity::user::{Model, ActiveModel};
 use argon2::{
     password_hash::{
@@ -39,16 +39,22 @@ pub async fn users<R: UserRepo>(
     q: web::Query<UsersQuery>,
     service: web::Data<Service<R>>,
 ) -> impl Responder {
-    let users: Vec<User> = service.repo
+    let result = service.repo
         .get_many(
             q.skip.unwrap_or(0),
             q.limit.unwrap_or(10),
+            UserFilters{
+                interests: &q.interests,
+                skills:    &q.skills,
+            },
         )
-        .await
-        .into_iter()
-        .map(from_model)
-        .collect();
-    HttpResponse::Ok().json(users)
+        .await;
+    match result {
+        Some(users) => HttpResponse::Ok().json(
+            users.into_iter().map(from_model).collect::<Vec<User>>()
+        ),
+        _ => HttpResponse::InternalServerError().finish(),
+    }
 }
 
 pub async fn get_user<R: UserRepo>(

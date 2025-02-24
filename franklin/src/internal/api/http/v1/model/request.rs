@@ -2,8 +2,10 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct UsersQuery {
-    pub skip:  Option<u32>,
-    pub limit: Option<u32>,
+    pub skip:      Option<u32>,
+    pub limit:     Option<u32>,
+    pub interests: Option<String>,
+    pub skills:    Option<String>,
 }
 
 #[derive(Deserialize)]

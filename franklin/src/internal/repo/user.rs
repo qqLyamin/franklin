@@ -1,4 +1,4 @@
-use crate::internal::contracts::UserRepo;
+use crate::internal::contracts::{UserFilters, UserRepo};
 use crate::internal::entity::{
     prelude::*,
     user::Model,
@@ -27,13 +27,20 @@ pub struct Repo {
 }
 
 impl UserRepo for Repo {
-    async fn get_many(&self, skip: u32, limit: u32) -> Vec<Model> {
-        User::find()
+    async fn get_many(&self, skip: u32, limit: u32, filters: UserFilters<'_>) -> Option<Vec<Model>> {
+        let mut q = User::find()
             .offset(skip as u64)
-            .limit(limit as u64)
+            .limit(limit as u64);
+        if let Some(interests) = filters.interests {
+            q = q.filter(Column::Interests.eq(interests)); // todo: ilike instead of eq
+        }
+        if let Some(skills) = filters.skills {
+            q = q.filter(Column::Skills.eq(skills)); // todo: ilike instead of eq
+        }
+        q
             .all(&self.db)
             .await
-            .unwrap()
+            .ok()
     }
 
     async fn get_one(&self, id: Uuid) -> Result<Model, err::User> {
