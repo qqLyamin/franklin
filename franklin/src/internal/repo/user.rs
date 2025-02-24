@@ -37,27 +37,26 @@ impl UserRepo for Repo {
     }
 
     async fn get_one(&self, id: Uuid) -> Result<Model, err::User> {
-        match User::find_by_id(id).one(&self.db).await {
-            Ok(Some(user)) => Ok(user),
-            Ok(None) => Err(err::User::NotFound),
-            _ => Err(err::User::DB),
-        }
+        let result = User::find_by_id(id)
+            .one(&self.db)
+            .await;
+        map_user_result(result)
     }
 
     async fn get_one_by_name(&self, name: &str) -> Result<Model, err::User> {
-        match User::find().filter(Column::Name.eq(name)).one(&self.db).await {
-            Ok(Some(user)) => Ok(user),
-            Ok(None) => Err(err::User::NotFound),
-            _ => Err(err::User::DB),
-        }
+        let result = User::find()
+            .filter(Column::Name.eq(name))
+            .one(&self.db)
+            .await;
+        map_user_result(result)
     }
 
     async fn get_one_by_email(&self, email: &str) -> Result<Model, err::User> {
-        match User::find().filter(Column::Email.eq(email)).one(&self.db).await {
-            Ok(Some(user)) => Ok(user),
-            Ok(None) => Err(err::User::NotFound),
-            _ => Err(err::User::DB),
-        }
+        let result = User::find()
+            .filter(Column::Email.eq(email))
+            .one(&self.db)
+            .await;
+        map_user_result(result)
     }
 
     async fn create(&self, model: Model) -> Result<Uuid, err::User> {
@@ -111,5 +110,13 @@ fn map_upsert_err(e: DbErr) -> err::User {
             }
         },
         _ => err::User::DB,
+    }
+}
+
+fn map_user_result(r: Result<Option<Model>, DbErr>) -> Result<Model, err::User> {
+    match r {
+        Ok(Some(user)) => Ok(user),
+        Ok(None) => Err(err::User::NotFound),
+        _ => Err(err::User::DB),
     }
 }
