@@ -5,21 +5,11 @@ use crate::internal::entity::{
     user::ActiveModel,
     user::Column,
 };
-use sea_orm::{
-    DatabaseConnection,
-    Database,
-    EntityTrait,
-    QuerySelect,
-    ConnectOptions,
-    SqlErr,
-    IntoActiveModel,
-    ActiveModelTrait,
-    DbErr,
-    ColumnTrait,
-    QueryFilter,
-};
+use sea_orm::*;
+use sea_orm::sea_query::extension::postgres::PgExpr;
 use crate::internal::err;
 use uuid::Uuid;
+use sea_query::Expr;
 
 #[derive(Clone)]
 pub struct Repo {
@@ -32,10 +22,10 @@ impl UserRepo for Repo {
             .offset(skip as u64)
             .limit(limit as u64);
         if let Some(interests) = filters.interests {
-            q = q.filter(Column::Interests.like(format!("%{}%", interests))); // todo: ilike instead of like
+            q = q.filter(Expr::col(Column::Interests).ilike(format!("%{}%", interests)));
         }
         if let Some(skills) = filters.skills {
-            q = q.filter(Column::Skills.like(format!("%{}%", skills))); // todo: ilike instead of like
+            q = q.filter(Expr::col(Column::Skills).ilike(format!("%{}%", skills)));
         }
         q
             .all(&self.db)
