@@ -32,10 +32,10 @@ impl UserRepo for Repo {
             .offset(skip as u64)
             .limit(limit as u64);
         if let Some(interests) = filters.interests {
-            q = q.filter(Column::Interests.eq(interests)); // todo: ilike instead of eq
+            q = q.filter(Column::Interests.like(format!("%{}%", interests))); // todo: ilike instead of like
         }
         if let Some(skills) = filters.skills {
-            q = q.filter(Column::Skills.eq(skills)); // todo: ilike instead of eq
+            q = q.filter(Column::Skills.like(format!("%{}%", skills))); // todo: ilike instead of like
         }
         q
             .all(&self.db)
