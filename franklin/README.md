@@ -45,7 +45,7 @@ Skill Exchange Platform — это веб-приложение, предназн
 ### Прочее
 - GET `/ping` — healthcheck
 - GET `protected` — Защищенный маршрут, доступный только с валидным токеном.
-
+- GET `/doc` — API Documentation
 ---
 
 ## Технологии
@@ -82,3 +82,10 @@ Skill Exchange Platform — это веб-приложение, предназн
 
 ```bash
 sea-orm-cli generate entity -u postgresql://frank:ben@localhost/franklinclub -o src/internal/entity
+```
+
+## Generate openapi.json (needed for /doc) from swagger.yml
+
+```bash
+swagger-codegen generate -i swagger.yml -l openapi -o docs
+```

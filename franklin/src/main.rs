@@ -13,6 +13,7 @@ use dotenvy::dotenv;
 use actix_cors::Cors;
 use crate::internal::config::Config;
 use crate::internal::contracts::Service;
+use actix_files::NamedFile;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -40,8 +41,18 @@ async fn main() -> std::io::Result<()> {
                     .route(web::patch().to(franklin::update_user::<Repo>))
             )
             .route("/ping", web::get().to(franklin::hello))
+            .route("/openapi.json", web::get().to(openapi))
+            .route("/doc", web::get().to(doc))
     })
         .bind(("127.0.0.1", 8080))?
         .run()
         .await
+}
+
+async fn openapi() -> actix_web::Result<NamedFile> {
+    Ok(NamedFile::open("./docs/openapi.json")?)
+}
+
+async fn doc() -> actix_web::Result<NamedFile> {
+    Ok(NamedFile::open("./doc.html")?)
 }
