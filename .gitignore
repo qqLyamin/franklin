@@ -19,6 +19,11 @@ __pycache__/
 .env.*
 .venv/
 
+# Rust #
+##########
+franklin/target
+franklin/migration/target
+
 # Logs and databases #
 ######################
 *.log
@@ -148,6 +153,7 @@ __MACOSX/
 #####################
 .envrc
 *.env
+.netrc
 
 # System backups #
 ##################

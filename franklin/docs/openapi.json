@@ -1,0 +1,330 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "API Specification Example",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "http://127.0.0.1:8080"
+  } ],
+  "paths" : {
+    "/users" : {
+      "get" : {
+        "tags" : [ "Article API" ],
+        "summary" : "Get a list of users",
+        "operationId" : "listArticles",
+        "parameters" : [ {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "limit",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "maximum" : 100,
+            "minimum" : 1,
+            "type" : "integer",
+            "example" : 10,
+            "default" : 10
+          }
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "offset",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "minimum" : 0,
+            "type" : "integer",
+            "example" : 10,
+            "default" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ArticleList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Article API" ],
+        "summary" : "Create an article.",
+        "operationId" : "createArticle",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Article"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Success",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Article"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "The input is invalid.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}" : {
+      "get" : {
+        "tags" : [ "Article API" ],
+        "summary" : "Get an article.",
+        "operationId" : "getArticle",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Resource ID",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Id"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Article"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "The resource is not found.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "Article API" ],
+        "summary" : "Update",
+        "operationId" : "updateArticle",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Resource ID",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Id"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Article"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Article"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "The resource is not found.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "Article API" ],
+        "summary" : "Delete an article.",
+        "operationId" : "deleteArticle",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Resource ID",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Id"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Success"
+          },
+          "404" : {
+            "description" : "The resource is not found.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Id" : {
+        "type" : "integer",
+        "description" : "Resource ID",
+        "format" : "int64",
+        "readOnly" : true,
+        "example" : 1
+      },
+      "ArticleForList" : {
+        "properties" : {
+          "id" : {
+            "$ref" : "#/components/schemas/Id"
+          },
+          "category" : {
+            "type" : "string",
+            "description" : "Category of an article",
+            "example" : "sports"
+          }
+        }
+      },
+      "Article" : {
+        "required" : [ "text" ],
+        "properties" : {
+          "text" : {
+            "maxLength" : 1024,
+            "type" : "string",
+            "description" : "Content of an article",
+            "example" : "# Title\n\n## Head Line\n\nBody"
+          }
+        },
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ArticleForList"
+        } ]
+      },
+      "ArticleList" : {
+        "type" : "array",
+        "items" : {
+          "$ref" : "#/components/schemas/ArticleForList"
+        }
+      },
+      "Error" : {
+        "required" : [ "code", "message" ],
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "example" : "illegal_input"
+          }
+        },
+        "description" : "<table>\n  <tr>\n    <th>Code</th>\n    <th>Description</th>\n  </tr>\n  <tr>\n    <td>illegal_input</td>\n    <td>The input is invalid.</td>\n  </tr>\n  <tr>\n    <td>not_found</td>\n    <td>The resource is not found.</td>\n  </tr>\n</table>\n"
+      }
+    },
+    "responses" : {
+      "NotFound" : {
+        "description" : "The resource is not found.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "IllegalInput" : {
+        "description" : "The input is invalid.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "parameters" : {
+      "Id" : {
+        "name" : "id",
+        "in" : "path",
+        "description" : "Resource ID",
+        "required" : true,
+        "style" : "simple",
+        "explode" : false,
+        "schema" : {
+          "$ref" : "#/components/schemas/Id"
+        }
+      },
+      "Limit" : {
+        "name" : "limit",
+        "in" : "query",
+        "description" : "limit",
+        "required" : false,
+        "style" : "form",
+        "explode" : true,
+        "schema" : {
+          "maximum" : 100,
+          "minimum" : 1,
+          "type" : "integer",
+          "example" : 10,
+          "default" : 10
+        }
+      },
+      "Offset" : {
+        "name" : "offset",
+        "in" : "query",
+        "description" : "offset",
+        "required" : false,
+        "style" : "form",
+        "explode" : true,
+        "schema" : {
+          "minimum" : 0,
+          "type" : "integer",
+          "example" : 10,
+          "default" : 0
+        }
+      }
+    }
+  }
+}

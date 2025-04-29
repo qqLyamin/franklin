@@ -1,0 +1,6 @@
+DATABASE_URL=postgresql://frank:ben@localhost/franklinclub
+DATABASE_MAX_CONN=10
+
+ALLOWED_ORIGIN=http://127.0.0.1
+
+SECRET=secret
